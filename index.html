@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<title>bro</title>
+<style>
+body{font-size: 14px;margin: 0;overflow: hidden;}
+
+#editor,#prompt{border-style: none; border-color: transparent; overflow: auto; padding: 0;}
+#editor{background-color: black; color: #33cc33; float: left; resize: none;}
+#prompt{width: 100%; resize: none;}
+#console{float: left; background-color: blue;}
+</style>
+</head>
+<body>
+
+<textarea id="editor">
+(define (let*->nested-lets exp)
+  (if (null? (cdadr exp)) (cons 'let (cdr exp)); base case, -> let
+    (let ((new-let (list 'let* (cdadr exp) (caddr exp)))); inductive step, -> let*
+      (list 'let (list (caadr exp)) (let*->nested-lets new-let))
+    )
+  )
+)
+</textarea>
+<div id="console">
+<!-- <textarea id="prompt"></textarea> -->
+</div>
+
+<br />
+<button id="run">Run</button>
+
+<script src="jquery.js"></script>
+<script src="dom.js"></script>
+<script src="eval.js"></script>
+
+</body>
+</html>
