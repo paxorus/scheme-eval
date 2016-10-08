@@ -1,22 +1,17 @@
 <!doctype html>
 <html>
 <head>
-<title>bro</title>
-<style>
-body{font-size: 14px;margin: 0;overflow: hidden;}
-
-#editor,#prompt{border-style: none; border-color: transparent; overflow: auto; padding: 0;}
-#editor{background-color: black; color: #33cc33; float: left; resize: none;}
-#prompt{width: 100%; resize: none;}
-#console{float: left; background-color: #dddddd;}
-</style>
-<link rel="stylesheet" href="lined-text-area/jquery-linedtextarea.css">
+	<title>Scheme Eval</title>
+	<link rel="stylesheet" href="stylesheets/main.css">
 </head>
 <body>
 
-<textarea id="editor">
-(+ 3 4)
-</textarea>
+<div id="editor">
+function foo(items) {
+    var x = "All this is syntax highlighted";
+    return x;
+}
+</div>
 <div id="console">
 <!-- <textarea id="prompt"></textarea> -->
 </div>
@@ -24,10 +19,16 @@ body{font-size: 14px;margin: 0;overflow: hidden;}
 <br />
 <button id="run">Run</button>
 
-<script src="jquery.js"></script>
-<script src="lined-text-area/jquery-linedtextarea.js"></script>
-<script src="dom.js"></script>
-<script src="eval.js"></script>
+<script src="ace-editor/ace.js"></script>
+<script>
+	var editor = ace.edit("editor");
+	editor.setTheme("ace/theme/monokai");
+	editor.getSession().setMode("ace/mode/javascript");
+	editor.$blockScrolling = Infinity;// disabling warning
+</script>
+<script src="javascripts/jquery.min.js"></script>
+<script src="javascripts/dom.js"></script>
+<script src="javascripts/eval.js"></script>
 
 </body>
 </html>

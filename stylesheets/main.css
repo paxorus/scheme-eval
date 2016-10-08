@@ -1,0 +1,33 @@
+body{
+	font-size: 14px;
+	margin: 0;
+	overflow: hidden;
+}
+#editor { 
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 14px;
+    width: 100px;
+}
+
+/*#editor, #prompt{
+	border-style: none;
+	border-color: transparent;
+	overflow: auto;
+	padding: 0;
+}
+#editor{
+	background-color: black;
+	color: #33cc33;
+	float: left;
+	resize: none;
+}
+#prompt{
+	width: 100%;
+	resize: none;
+}
+#console{
+	float: left;
+	background-color: #dddddd;
+}*/
