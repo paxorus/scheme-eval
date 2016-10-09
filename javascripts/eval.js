@@ -8,18 +8,18 @@ function eval(text, env){
 	var exp = parse(text);
 	// exp could be an array of strings or one string
 	console.log(exp);
-	if(isLiteral(exp)){
+	if (isLiteral(exp)) {
 		return evalLiteral(exp);
-	}else if(isAtom(exp)){
+	}else if (isAtom(exp)) {
 		return lookupVariableValue(exp, env);
-	}else if(isApplication(exp)){
+	}else if (isApplication(exp)) {
 		var proc = eval(exp[0], env);
-		var args = exp.slice(1).map(function(arg){
+		var args = exp.slice(1).map(function (arg) {
 			return eval(arg, env);
 		});
 		return apply(proc, args);
 	}else{
-		error("Unknown expression type -- EVAL", exp);
+		throw {name: "Parse error", data: "Yikes! What have you done?"};
 	}
 }
 
@@ -31,7 +31,7 @@ function apply(proc, args){
 		var newEnv = proc[3].extend(newFrame);
 		return evalSequence(proc[2], newEnv);
 	}else{
-		error("Unknown procedure type -- APPLY", proc);
+		throw {name: "Unknown procedure", data: "Did you ever create the function '" + proc + "'?"};
 	}
 }
 
@@ -41,7 +41,7 @@ function evalSequence(exps, env){
 	var results = exps.map(function(exp){
 		return eval(exp);
 	});
-	return results[results.length-1];
+	return results[results.length - 1];
 }
 
 function evalLiteral(exp){
@@ -163,6 +163,10 @@ function interpret(text){
 }
 
 function parse(exp){
+	if (exp === undefined) {
+		throw {name: "Parse error", data: "Yikes! What have you done?"};
+	}
+
 	// todo: () matching
 	if(!exp.startsWith("(")){
 		return exp;

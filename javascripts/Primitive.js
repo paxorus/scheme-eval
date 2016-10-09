@@ -15,6 +15,19 @@ function Node(x, y) {
 	};
 }
 
+var car = function (c) {
+	assert(arguments, 1);
+	return c.x;
+};
+var cdr = function (c) {
+	assert(arguments, 1);
+	return c.y;
+};
+var cons = function (x, y) {
+	assert(arguments, 2);
+	return new Node(x, y);
+};
+
 var Primitive = {
 	"+": function () {
 		var args = nassert(arguments);
@@ -62,6 +75,30 @@ var Primitive = {
 		var args = nassert(arguments, 2);
 		return args[0] == args[1];
 	},
+	"eq?": function (a, b) {
+		assert(arguments, 2);
+		return a === b;
+	},
+	"eqv?": function (a, b) {
+		return Primitive["eq?"](a, b);
+	},
+	"equal?": function (a, b) {
+		assert(arguments, 2);
+		var _deepEqual = function (a, b) {
+			var aIsPair = Primitive["pair?"](a);
+			var bIsPair = Primitive["pair?"](b);
+			console.log(aIsPair);
+			console.log(bIsPair);
+			if (aIsPair && bIsPair) {
+				return _deepEqual(car(a), car(b)) && _deepEqual(cdr(a), cdr(b));
+			} else if (!aIsPair && !bIsPair) {
+				return a === b;
+			} else {
+				return false;
+			}
+		}
+		return _deepEqual(a, b);
+	},
 	display: function () {
 		var args = assert(arguments, 1);
 		terminal.log(args[0]);
@@ -74,16 +111,20 @@ var Primitive = {
 		var args = assert(arguments, 2);
 		terminal.error({name: name, data: data});
 	},
-	car: function (c) {
-		return c.x;
+	car: car,
+	cdr: cdr,
+	cons: cons,
+	"null?": function (x) {
+		assert(arguments, 1);
+		return x === null;
 	},
-	cdr: function (c) {
-		return c.y;
-	},
-	cons: function (x, y) {
-		assert(arguments, 2);
-		return new Node(x, y);
-	},
+	"pair?": function (x) {
+		assert(arguments, 1);
+		return x && x.constructor.name == "Node";
+	}
+};
+
+var AdvancedLib = {
 	list: function () {
 		var args = assert(arguments);
 		if (args.length == 0) {
@@ -92,7 +133,7 @@ var Primitive = {
 		var index = args.length - 1;
 		var cell = null;
 		for (; index >= 0; index --) {
-			cell = Primitive.cons(args[index], cell);
+			cell = cons(args[index], cell);
 		}
 		return cell;
 	},
@@ -102,23 +143,23 @@ var Primitive = {
 			if (l === null) {
 				return 0;
 			}
-			return _length(Primitive.cdr(l)) + 1;
+			return _length(cdr(l)) + 1;
 		};
 		return _length(list);
 	},
-	// reverse: function (list) {
-	// 	var args = assert(arguments, 1);
-	// 	var _reverse = function (for, rev) {
-	// 		if (for === null) {
-	// 			return null;
-	// 		}
-	// 		return Primitive.cons(
-	// 			_reverse(Primitive.cdr(l)),
-	// 			Primitive.car(l)
-	// 		);
-	// 	};
-	// 	return _reverse(list, null);
-	// },
+	reverse: function (list) {
+		var args = assert(arguments, 1);
+		var _reverse = function (forw, rev) {
+			if (forw === null) {
+				return rev;
+			}
+			return _reverse(
+				cdr(forw),
+				cons(car(forw), rev)
+			);
+		};
+		return _reverse(list, null);
+	},
 	map: function (proc, list) {
 		assert(arguments, 2);
 
@@ -126,9 +167,9 @@ var Primitive = {
 			if (l === null) {
 				return null;
 			}
-			return Primitive.cons(
-				apply(proc, Primitive.car(l)),
-				_map(Primitive.cdr(l))
+			return cons(
+				apply(proc, car(l)),
+				_map(cdr(l))
 			);
 		};
 		return _map(list);
@@ -141,27 +182,41 @@ var Primitive = {
 			if (subl1 === null) {
 				return l2;
 			}
-			return Primitive.cons(
-				Primitive.car(subl1),
-				_append(Primitive.cdr(subl1))
+			return cons(
+				car(subl1),
+				_append(cdr(subl1))
 			);
 		}
 		return _append(l1);
 	},
-	"null?": function (x) {
+	and: function () {
+		var args = assert(arguments);
+		if (args.length == 0) {
+			return true;
+		}
+		var firstItem = args.shift();
+		return args.reduce(function (cumul, x) {
+			return cumul && x;
+		}, firstItem);
+	},
+	or: function () {
+		var args = assert(arguments);
+		if (args.length == 0) {
+			return false;
+		}
+		var firstItem = args.shift();
+		return args.reduce(function (cumul, x) {
+			return cumul || x;
+		}, firstItem);
+	},
+	not: function (a) {
 		assert(arguments, 1);
-		return x === null;
-	},
-	"zero?": function (x) {
-		nassert(arguments, 1);
-		return x === 0;
-	},
-	"eq?": function (a, b) {
-		return a === b;
-	},// todo
-	"equal?": function (a, b) {
-		return a === b;
-	},// todo
+		// returns true for 0 and "", unlike R5RS
+		return !a;
+	}
+};
+
+var MathLib = {
 	"1+": function (a) {
 		nassert(arguments, 1);
 		return a + 1;
@@ -170,23 +225,42 @@ var Primitive = {
 		nassert(arguments, 1);
 		return a - 1;
 	},
-	quotient: function (a,b) {
+	quotient: function (a, b) {
 		nassert(arguments, 2);
 		return Math.floor(a / b);
 	},
-	remainder: function (a,b) {
+	remainder: function (a, b) {
 		nassert(arguments, 2);
 		return a % b;
 	},
-	"=": function () {
-		var args = nassert(arguments, ">=2");
-		for(var i = 1; i < arguments.length; i ++) {
-			if(arguments[i-1] !== arguments[i]) {
-				return false;
-			}
-		}
-		return true;
-	}
+	min: function () {
+		var args = nassert(arguments, ">=1");
+		return args.reduce(function (cumul, a) {
+			return Math.min(cumul, a);
+		});
+	},
+	max: function () {
+		var args = nassert(arguments, ">=1");
+		return args.reduce(function (cumul, a) {
+			return Math.max(cumul, a);
+		});
+	},
+	abs: function (x) {
+		nassert(arguments, 1);
+		return Math.abs(x);
+	},
+	"zero?": function (x) {
+		nassert(arguments, 1);
+		return x === 0;
+	},
+}
+
+for (op in AdvancedLib) {
+	Primitive[op] = AdvancedLib[op];
+}
+
+for (op in MathLib) {
+	Primitive[op] = MathLib[op];
 }
 
 // ASSERTIONS
