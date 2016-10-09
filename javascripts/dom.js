@@ -2,18 +2,62 @@
  * Prakhar Sahay 07/13/2016
  */
 
+// Ace editor init
+var editor = ace.edit("editor");
+editor.setTheme("ace/theme/monokai");
+editor.getSession().setMode("ace/mode/pscheme");
+editor.$blockScrolling = Infinity;// disabling warning
+
+editor.commands.addCommand({
+	name: 'run',
+	bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
+	exec: run
+});
+
 $(window).resize(function (evt) {
-	$("#editor").css("height", window.innerHeight-125);
-	$("#console").css("height", window.innerHeight-125);
-	$("#editor").css("width",Math.floor(0.6*window.innerWidth));
-	$("#console").css("width",window.innerWidth-$("#editor").width());
-	// $("#editor").linedtextarea();
+	var left = Math.floor(0.5 * window.innerWidth);
+	var right = window.innerWidth - left;
+	var height = window.innerHeight - 125;
+
+	$("#editor").height(height);
+	$("#editor").width(left);
+
+	$("#terminal").height(height);
+	$("#terminal").width(window.innerWidth - left);
+	$("#terminal").css("left", left);
+
+	// $("#run").css("top", height);
 });
 
 $(document).ready(function () {
 	$(window).resize();
-	$("#run").on("click", function (evt) {
-		var value = interpret(editor.getValue());
-		$("#console").append(value+"<br>");
-	});
+	// $("#run").on("click", run);
 });
+
+function run() {
+	terminal.clear();
+	var input = editor.getValue();
+	var output = interpret(input);
+	console.log(output);
+	terminal.log(output);
+}
+
+function Terminal(node) {
+	this.log = function (line) {
+		var textNode = $("<span>", {class: "terminal-entry"});
+		// var line = this.stringify(value);
+		textNode.text(line);
+		node.append(textNode);
+		node.append("<br>");
+	},
+	this.clear = function () {
+		node.html("");
+	},
+	this.error = function (err) {
+		var textNode = $("<span>", {class: "terminal-error"});
+		textNode.text(err.name + ": " + err.data);
+		node.append(textNode);
+		node.append("<br>");
+	}
+}
+var terminal = new Terminal($("#terminal"));

@@ -1,38 +1,26 @@
 <!doctype html>
 <html>
 <head>
-	<title>Scheme Eval</title>
-	<link rel="stylesheet" href="stylesheets/main.css">
+	<title>PScheme Eval</title>
+	<link href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono" rel="stylesheet">
+	<link href="stylesheets/main.css" rel="stylesheet">
 </head>
 <body>
 
-<div id="editor">; Prakhar Sahay 10/08/2016
-; repeated composition of a function
-(define (square x) (* x x))
-(define (repeated f n)
-  (lambda (x)
-    (if (= n 0) x
-      (f ((repeated f (- n 1)) x))
-    )
-  )
-)
+<div id="editor">; Prakhar Sahay 10/09/2016
+<!-- (if #t 3 4) -->(append (list 1 2) (list 3 4))
 </div>
-<div id="console">
+<div id="terminal">
 <!-- <textarea id="prompt"></textarea> -->
 </div>
 
 <br />
-<button id="run">Run</button>
+<!-- <button id="run">Run</button> -->
 
 <script src="ace-editor/ace.js"></script>
-<script>
-	var editor = ace.edit("editor");
-	editor.setTheme("ace/theme/monokai");
-	editor.getSession().setMode("ace/mode/pscheme");
-	editor.$blockScrolling = Infinity;// disabling warning
-</script>
 <script src="javascripts/jquery.min.js"></script>
 <script src="javascripts/dom.js"></script>
+<script src="javascripts/Primitive.js"></script>
 <script src="javascripts/eval.js"></script>
 
 </body>

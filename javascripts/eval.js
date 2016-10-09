@@ -7,6 +7,7 @@ procedure: ["procedure", params[], body, Env], change this to an object later
 function eval(text, env){
 	var exp = parse(text);
 	// exp could be an array of strings or one string
+	console.log(exp);
 	if(isLiteral(exp)){
 		return evalLiteral(exp);
 	}else if(isAtom(exp)){
@@ -78,83 +79,6 @@ function isAtom(exp){
 	return !(exp instanceof Array);
 }
 
-var primitiveProcedures = {
-	car: function(c){return c[0]},
-	cdr: function(c){return c[1]},
-	cons: function(x,y){assertNargs(arguments,2);return [x,y]},
-	list: function(){
-		if(arguments.length == 0){
-			return null;
-		}
-		var index = arguments.length - 1;
-		var cell = arguments[index];
-		for(;index>=0;index--){
-			cell = primitiveProcedures.cons(arguments[index], cell);
-		}
-		return cell;
-	},
-	map: function(proc, list){
-		assertNargs(arguments,2);
-		// assert procedure and list
-		if(list === null){
-			return null;
-		}else{
-			return primitiveProcedures.cons(
-				proc(primitiveProcedures.car(list)),
-				primitiveProcedures.map(proc, primitiveProcedures.cdr(list))
-			);
-		}
-	},
-	append: function(){
-		if(arguments.length == 0){
-			return null;
-		}
-		console.log("wip");
-	},
-	"null?": function(x){assertNargs(arguments,1);return x === null},
-	"zero?": function(x){assertNargs(arguments,1);assertNum(arguments);return x === 0},
-	"eq?": function(a,b){return a === b},// todo
-	"equal?": function(a,b){return a === b},// todo
-	"1+": function(a){assertNargs(arguments,1);assertNum(arguments);return a+1},
-	"-1+": function(a){assertNargs(arguments,1);assertNum(arguments);return a-1},
-	quotient: function(a,b){assertNargs(arguments,2);assertNum(arguments);return Math.floor(a/b)},
-	remainder: function(a,b){assertNargs(arguments,2);assertNum(arguments);return a%b},
-	"/": function(){
-		var args = fix(arguments);
-		assertNargs(args,">=1");
-		assertNum(args);
-		var dividend=args.unshift();
-		return args.reduce(function(a,b){return a/b},dividend);
-	},
-	"*": function(){
-		var args = fix(arguments);
-		assertNum(args);
-		return args.reduce(function(a,b){return a*b},1);
-	},
-	"+": function(){
-		var args = fix(arguments);
-		assertNum(args);
-		return args.reduce(function(a,b){return a+b},0);
-	},
-	"-": function(){
-		var args = fix(arguments);
-		assertNargs(args,">=1");
-		assertNum(args);
-		var minuend=args.unshift();
-		return args.reduce(function(a,b){return a-b},minuend);
-	},
-	"=": function(){
-		assertNargs(arguments,">=2");
-		assertNum(arguments);
-		for(var i=1;i<arguments.length;i++){
-			if(arguments[i-1] !== arguments[i]){
-				return false;
-			}
-		}
-		return true;
-	}
-}
-
 function isPrimitiveProcedure(proc){
 	return proc[0] == "primitive";
 }
@@ -165,6 +89,12 @@ function isCompoundProcedure(proc){
 
 function applyPrimitiveProcedure(proc, args){
 	var implementation = proc[1];
+	// JS-apply expects array, so we package into an array if an atom
+	// HOWEVER our list representations use an array so they would not get packaged here
+	// and a list would appear as two arguments
+	if (!Array.isArray(args)) {
+		args = [args];
+	}
 	return implementation.apply(undefined, args);
 }
 
@@ -196,7 +126,7 @@ function Environment(baseEnv, newFrame){
 }
 
 function Frame(varList, valList){
-	console.log("wip");
+	console.log("wip frame");
 	// error if list lengths differ
 	for(var i=0;i<varList.length;i++){
 		this[varList[i]] = valList[i];
@@ -206,33 +136,17 @@ function Frame(varList, valList){
 function lookupVariableValue(varName, env){
 	var value = env.get(varName);
 	if(value === undefined){
-		error("Unbound variable", varName);
+		throw {name: "Unbound variable", data: "Did you ever set the variable '" + varName + "'?"};
 	}
 	return value;
 }
 
 function setupEnvironment(){
 	var primitiveFrame = {};
-	Object.keys(primitiveProcedures).forEach(function (op) {
-		primitiveFrame[op] = ["primitive", primitiveProcedures[op]];
+	Object.keys(Primitive).forEach(function (op) {
+		primitiveFrame[op] = ["primitive", Primitive[op]];
 	});
 	return new Environment(null, primitiveFrame);
-}
-
-
-// WARNINGS AND ERRORS
-
-function assertNargs(){
-	console.log("wip");
-}
-
-function assertNum(){
-	console.log("wip");
-}
-
-function error(message, obj){
-	// involve pretty-printing
-	console.log(message + "\n" + obj);
 }
 
 // SYNTAX PARSING
@@ -241,7 +155,11 @@ function interpret(text){
 	text = text.split("\n").map(stripComment).join("\n");
 	text = text.trim();// an initial trim is necessary
 	var initialEnv = setupEnvironment();
-	return eval(text, initialEnv);
+	try {
+		return eval(text, initialEnv);
+	} catch (e) {
+		terminal.error(e);
+	}
 }
 
 function parse(exp){
@@ -294,10 +212,6 @@ function stripComment(line){
 	return line;
 }
 
-function isWhiteSpace(char){
+function isWhiteSpace(char) {
 	return ["\n","\t"," "].indexOf(char) > -1;
-}
-
-function fix(arguments){
-	return Array.prototype.slice.call(arguments);
 }

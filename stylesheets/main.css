@@ -1,15 +1,29 @@
-body{
-	font-size: 14px;
+body {
+	font-size: 16px;
 	margin: 0;
 	overflow: hidden;
 }
-#editor { 
+#editor {
     position: absolute;
     top: 0;
     left: 0;
     font-size: 16px;
 }
-
+#terminal {
+	position: absolute;
+	background-color: #dddddd;
+	font-family: 'Droid Sans Mono', monospace;
+}
+#run {
+	position: absolute;
+}
+.terminal-entry {
+	padding: 10px;
+}
+.terminal-error {
+	padding: 10px;
+	color: #cc0000;
+}
 /*#prompt{
 	border-style: none;
 	border-color: transparent;
@@ -19,8 +33,4 @@ body{
 #prompt{
 	width: 100%;
 	resize: none;
-}
-#console{
-	float: left;
-	background-color: #dddddd;
 }*/
