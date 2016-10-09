@@ -1,14 +1,16 @@
-ace.define("ace/mode/scheme_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
+ace.define("ace/mode/pscheme_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var SchemeHighlightRules = function() {
-    var keywordControl = "case|do|let|loop|if|else|when";
-    var keywordOperator = "eq?|eqv?|equal?|and|or|not|null?";
-    var constantLanguage = "#t|#f";
-    var supportFunctions = "cons|car|cdr|cond|lambda|lambda*|syntax-rules|format|set!|quote|eval|append|list|list?|member?|load";
+    var keywordControl = "if|else|cond|let|begin|error|newline|display";// red control flow
+    var keywordOperator = "eq?|eqv?|equal?|and|or|not|cons";// red operators
+    var constantLanguage = "#t|#f|pi";// purple constant
+    var supportFunctions = "null?|pair?|apply|eval";// blue functions
+    supportFunctions += "|set!|set-car!|set-cdr!|reverse|length|map|append";
+    supportFunctions += "|exp|max|min|abs|floor|ceiling|expt|sqrt";
 
     var keywordMapper = this.createKeywordMapper({
         "keyword.control": keywordControl,
@@ -17,37 +19,78 @@ var SchemeHighlightRules = function() {
         "support.function": supportFunctions
     }, "identifier", true);
 
+    var validNameRegex = "[a-zA-Z_#][a-zA-Z0-9_\\-\\?\\!\\*]*";
+
     this.$rules = {
     "start": [
         {
+            // grey comment
             token: "comment",
             regex: ";.*$"
         },
         {
-            token: ["storage.type.function-type.scheme", "text", "entity.name.function.scheme"],
-            regex: "(?:\\b(?:(define|define-syntax|define-macro))\\b)(\\s+)((?:\\w|\\-|\\!|\\?)*)"
+            // blue italics list
+            token: ["storage.type.function-type.scheme"],
+            regex: "list",
         },
         {
+            token: ["storage.type.function-type.scheme"],
+            regex: "define",
+            next: "declaration"
+        },
+        {
+            // blue italics lambda
+            token: ["storage.type.function-type.scheme"],
+            regex: "lambda",
+            next: "paramlist"
+        },
+        {
+            // purple constant #:something
             token: "punctuation.definition.constant.character.scheme",
             regex: "#:\\S+"
         },
         {
+            // green *something*
             token: ["punctuation.definition.variable.scheme", "variable.other.global.scheme", "punctuation.definition.variable.scheme"],
             regex: "(\\*)(\\S*)(\\*)"
         },
+        // {
+        //     // green lambda
+        //     token: ["punctuation.definition.variable.scheme"],
+        //     regex: "lambda"
+        // },
         {
+            // red constant cadr
+            token: "keyword.operator",
+            regex: "c[ad]+r"
+        }, 
+        {
+            // purple constant #X0088ff
             token: "constant.numeric", // hex
             regex: "#[xXoObB][0-9a-fA-F]+"
         }, 
         {
+            // purple constant -4.5
             token: "constant.numeric", // float
             regex: "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?"
         },
         {
-            token: keywordMapper,
-            regex: "[a-zA-Z_#][a-zA-Z0-9_\\-\\?\\!\\*]*"
+            // purple symbol
+            token: "punctuation.definition.constant.character.scheme",
+            regex: "'[a-zA-Z\\-]+"
         },
         {
+            // purple '()
+            token: "punctuation.definition.constant.character.scheme",
+            regex: "'\\(\\)"
+        },
+        {
+            // blue, red, purple built-ins
+            token: keywordMapper,
+            regex: validNameRegex
+        },
+        {
+            // double quote -> go into qqstring state
             token: "string",
             regex: '"(?=.)',
             next: "qqstring"
@@ -55,6 +98,7 @@ var SchemeHighlightRules = function() {
     ],
     "qqstring": [
         {
+            // purple escape character \.
             token: "constant.character.escape.scheme",
             regex: "\\\\."
         },
@@ -64,16 +108,65 @@ var SchemeHighlightRules = function() {
             merge: true
         },
         {
+            // purple escape character \$
             token: "string",
             regex: "\\\\$",
             next: "qqstring",
             merge: true
         },
         {
+            // strings ends with " or end of line
             token: "string",
             regex: '"|$',
             next: "start",
             merge: true
+        }
+    ],
+    "paramlist": [
+        {
+            token: "text",
+            regex: "\\(",
+            next: "param"
+        },
+        {
+            token: "text",
+            regex: "\\s+",
+            next: "param"
+        },
+        {
+            token: "text",
+            regex: "\\)",
+            next: "start"
+        }
+    ],
+    "param": [
+        {
+            // orange parameter
+            token: "variable.parameter",
+            regex: validNameRegex,
+            next: "paramlist",
+        }
+    ],
+    "declaration": [
+        {
+            // white open parens
+            token: "text",
+            regex: "\\(",
+            next: "funcname"
+        },
+        {
+            // green variable name
+            token: "punctuation.definition.variable.scheme",
+            regex: validNameRegex,
+            next: "start"
+        }
+    ],
+    "funcname": [
+        {
+            // green function name
+            token: "punctuation.definition.variable.scheme",
+            regex: validNameRegex,
+            next: "paramlist"
         }
     ]
 }
@@ -130,17 +223,17 @@ var MatchingParensOutdent = function() {};
 exports.MatchingParensOutdent = MatchingParensOutdent;
 });
 
-ace.define("ace/mode/scheme",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/scheme_highlight_rules","ace/mode/matching_parens_outdent"], function(require, exports, module) {
+ace.define("ace/mode/pscheme",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/pscheme_highlight_rules","ace/mode/matching_parens_outdent"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
-var SchemeHighlightRules = require("./scheme_highlight_rules").SchemeHighlightRules;
+var SchemeHighlightRules = require("./pscheme_highlight_rules").SchemeHighlightRules;
 var MatchingParensOutdent = require("./matching_parens_outdent").MatchingParensOutdent;
 
 var Mode = function() {
     this.HighlightRules = SchemeHighlightRules;
-	this.$outdent = new MatchingParensOutdent();
+    this.$outdent = new MatchingParensOutdent();
 };
 oop.inherits(Mode, TextMode);
 
@@ -218,7 +311,7 @@ oop.inherits(Mode, TextMode);
         this.$outdent.autoOutdent(doc, row);
     };
     
-    this.$id = "ace/mode/scheme";
+    this.$id = "ace/mode/pscheme";
 }).call(Mode.prototype);
 
 exports.Mode = Mode;

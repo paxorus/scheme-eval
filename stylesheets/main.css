@@ -7,21 +7,14 @@ body{
     position: absolute;
     top: 0;
     left: 0;
-    font-size: 14px;
-    width: 100px;
+    font-size: 16px;
 }
 
-/*#editor, #prompt{
+/*#prompt{
 	border-style: none;
 	border-color: transparent;
 	overflow: auto;
 	padding: 0;
-}
-#editor{
-	background-color: black;
-	color: #33cc33;
-	float: left;
-	resize: none;
 }
 #prompt{
 	width: 100%;
