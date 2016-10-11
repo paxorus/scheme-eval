@@ -1,4 +1,4 @@
-function Node(x, y) {
+function Cell(x, y) {
 	this.x = x;
 	this.y = y;
 	this.toString = function (notTop) {
@@ -7,7 +7,7 @@ function Node(x, y) {
 	this._s = function () {
 		if (this.y === null) {
 			return this.x;
-		} else if (this.y.constructor.name != "Node") {
+		} else if (this.y.constructor.name != "Cell") {
 			return this.x + " . " + this.y;
 		} else {
 			return this.x + " " + this.y._s();
@@ -25,7 +25,7 @@ var cdr = function (c) {
 };
 var cons = function (x, y) {
 	assert(arguments, 2);
-	return new Node(x, y);
+	return new Cell(x, y);
 };
 
 var Primitive = {
@@ -120,7 +120,7 @@ var Primitive = {
 	},
 	"pair?": function (x) {
 		assert(arguments, 1);
-		return x && x.constructor.name == "Node";
+		return x && x.constructor.name == "Cell";
 	}
 };
 

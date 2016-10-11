@@ -10,7 +10,7 @@ editor.$blockScrolling = Infinity;// disabling warning
 
 editor.commands.addCommand({
 	name: 'run',
-	bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
+	bindKey: {win: 'Ctrl-Y', mac: 'Command-Y'},
 	exec: run
 });
 
@@ -37,9 +37,14 @@ $(document).ready(function () {
 function run() {
 	terminal.clear();
 	var input = editor.getValue();
-	var output = interpret(input);
-	console.log(output);
-	terminal.log(output);
+	// var output = interpret(input);
+	// console.log(output);
+	// terminal.log(output);
+	var st = new SourceTree(input);
+	console.log(st.tree);
+	console.log(st.tree.toString());
+	window.x = st.tree;
+	// window.y = 
 }
 
 function Terminal(node) {
