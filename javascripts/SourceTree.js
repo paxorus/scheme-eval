@@ -25,6 +25,7 @@ function SourceTree(source) {
 			});
 		} catch (e) {
 			terminal.error(e);
+			return [];
 		}
 	};
 

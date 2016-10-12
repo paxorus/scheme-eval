@@ -12,6 +12,12 @@ function eval(exp, env) {
 		return evalLiteral(exp);
 	} else if (isAtom(exp)) {
 		return lookupVariableValue(exp, env);
+	} else if (exp[0] == 'define') {
+		evalDefinition(exp, env);
+	} else if (exp[0] == 'if') {
+		return evalIf(exp, env);
+	} else if (exp[0] == 'begin') {
+		return evalSequence(exp, env);
 	} else if (isApplication(exp)) {
 		var proc = eval(exp[0], env);
 		var args = exp.slice(1).map(function (arg) {
@@ -45,6 +51,7 @@ function evalSequence(exps, env) {
 }
 
 function evalLiteral(exp) {
+	// value is independent of env
 	if (isNumber(exp)) {
 		return +exp;
 	}else if (isString(exp)) {
@@ -54,6 +61,111 @@ function evalLiteral(exp) {
 	}
 }
 
+function evalDefinition(exp, env) {
+	var value = eval(exp[2], env);
+	env.set(exp[1], value);
+}
+
+function evalIf(exp, env) {
+	var predicate = eval(exp[1], env);
+	var branch = exp[predicate?2:3];
+	return eval(branch, env);
+}
+
+function evalSequence(exp, env) {
+	if (exp.length == 1) {
+		return;
+	}
+	// toss all expression results except the final result
+	var value;
+	for (var i = 1; i < exp.length; i ++) {
+		value = eval(exp[i], env);
+	}
+	return value;
+}
+
+function applyPrimitiveProcedure(proc, args) {
+	var implementation = proc[1];
+	// JS-apply expects array, so we package into an array if an atom
+	// HOWEVER our list representations use an array so they would not get packaged here
+	// and a list would appear as two arguments
+	if (!Array.isArray(args)) {
+		args = [args];
+	}
+	return implementation.apply(undefined, args);
+}
+
+/**
+ * @param {object} baseEnv - Environment{} or null
+ * @param {object} newFrame - variable->value map
+ */
+
+function Environment(baseEnv, newFrame) {
+	var _base = baseEnv;
+	var _lookup = newFrame;
+
+	this.get = function (varName) {
+		var frame = this._frameOf(varName);
+		return (frame === null) ? undefined : frame[varName];
+	};
+
+	this.set = function (varName, val) {
+		var frame = this._frameOf(varName) || _lookup;
+		frame[varName] = val;
+	}
+
+	this._frameOf = function (varName) {
+		if (_lookup[varName]) {
+			// check if in this frame
+			return _lookup;
+		} else if (_base === null) {
+			// exit if no lower frames
+			return null;
+		} else {
+			// recursively search lower
+			return _base._frameOf(varName);
+		}
+	}
+
+	this.extend = function (newFrame) {
+		return new Environment(this, newFrame);
+	};
+}
+
+
+/**
+ * Maps variable name (string) to value (any type).
+ * @param {object} varList - Environment{} or null
+ * @param {object} valList - variable->value map
+ */
+function Frame(varList, valList) {
+	console.log("wip frame");
+	// error if list lengths differ
+	for( var i = 0; i < varList.length; i ++) {
+		this[varList[i]] = valList[i];
+	}
+}
+
+function lookupVariableValue(varName, env) {
+	var value = env.get(varName);
+	if (value === undefined) {
+		throw {name: "Unbound variable", data: "Did you ever set the variable '" + varName + "'?"};
+	}
+	return value;
+}
+
+function setupEnvironment() {
+	var primitiveFrame = {};
+	Object.keys(Primitive).forEach(function (op) {
+		primitiveFrame[op] = ["primitive", Primitive[op]];
+	});
+	return new Environment(null, primitiveFrame);
+}
+
+
+
+
+// HELPER PREDICATES
 
 function isLiteral(exp) {
 	return isAtom(exp) && (isNumber(exp) || isString(exp) || isBoolean(exp));
@@ -85,66 +197,4 @@ function isPrimitiveProcedure(proc) {
 
 function isCompoundProcedure(proc) {
 	return proc[0] == "procedure";
-}
-
-function applyPrimitiveProcedure(proc, args) {
-	var implementation = proc[1];
-	// JS-apply expects array, so we package into an array if an atom
-	// HOWEVER our list representations use an array so they would not get packaged here
-	// and a list would appear as two arguments
-	if (!Array.isArray(args)) {
-		args = [args];
-	}
-	return implementation.apply(undefined, args);
-}
-
-/**
- * @param {object} baseEnv - Environment{} or null
- * @param {object} newFrame - variable->value map
- */
-
-function Environment(baseEnv, newFrame) {
-	var _base = baseEnv;
-	var _lookup = newFrame;
-
-	this.get = function (varName) {
-		// if not this frame, search lower frames
-		if (_lookup[varName]) {
-			return _lookup[varName];
-		} else if (_base === null) {
-			// no lower frames
-			return undefined;
-		} else{
-			// recursively search lower
-			return _base.get(varName);
-		}
-	};
-
-	this.extend = function (newFrame) {
-		return new Environment(this,newFrame);
-	};
-}
-
-function Frame(varList, valList) {
-	console.log("wip frame");
-	// error if list lengths differ
-	for( var i = 0; i < varList.length; i ++) {
-		this[varList[i]] = valList[i];
-	}
-}
-
-function lookupVariableValue(varName, env) {
-	var value = env.get(varName);
-	if (value === undefined) {
-		throw {name: "Unbound variable", data: "Did you ever set the variable '" + varName + "'?"};
-	}
-	return value;
-}
-
-function setupEnvironment() {
-	var primitiveFrame = {};
-	Object.keys(Primitive).forEach(function (op) {
-		primitiveFrame[op] = ["primitive", Primitive[op]];
-	});
-	return new Environment(null, primitiveFrame);
 }

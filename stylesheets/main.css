@@ -8,20 +8,22 @@ body {
     top: 0;
     left: 0;
     font-size: 16px;
+    resize: horizontal;
 }
 #terminal {
 	position: absolute;
 	background-color: #dddddd;
 	font-family: 'Droid Sans Mono', monospace;
+	overflow-y: scroll;
 }
 #run {
 	position: absolute;
 }
 .terminal-entry {
-	padding: 10px;
+	/*padding: 10px;*/
 }
 .terminal-error {
-	padding: 10px;
+	/*padding: 10px;*/
 	color: #cc0000;
 }
 /*#prompt{

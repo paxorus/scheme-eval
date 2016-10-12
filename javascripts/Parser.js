@@ -6,13 +6,16 @@
 
 var Parser = {
 	parse: function (source) {
+
+		source = source.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 		this.str = source;
+
 		this.lineIdx = 0;
 		this.charIdx = 0;
 		this.buffer = "";
-
 		var tree = new Node(null);
 		this._parse(tree);
+
 		if (this.charIdx < this.str.length) {
 			throw {name: "Parenthesis mismatch", data: "I think you've got an extra ')'."};
 		} else if (this.charIdx > this.str.length) {
@@ -46,19 +49,9 @@ var Parser = {
 					}
 					break;
 				case "\"":
-					this.charIdx ++;
-					var idx = this.findNext("\"");
-					if (idx == -1) {
-						throw {
-							name: "Double quote mismatch",
-							data: "The string on line " + this.lineIdx + " never ends!"
-						};
-					}
-					// slice to include double quotes
-					var string = "\"" + this.str.substring(this.charIdx, idx + 1);
-					node.add(string);
-					this.charIdx = idx;
-					this.lineIdx += string.split("\n").length - 1;
+					// var idx = this.charIdx + 1;
+					// this.charIdx ++;
+					this.readString();
 					break;
 				case "\t":
 				case " ":
@@ -105,6 +98,25 @@ var Parser = {
 		this.symbolMode = false;
 	},
 
+	readString: function () {
+		var previousIdx = this.charIdx;
+		do {
+			this.charIdx ++;// step past current double quote
+			idx = this.findNext("\"");
+			this.charIdx = idx;
+			if (idx == -1) {
+				throw {
+					name: "Double quote mismatch",
+					data: "The string on line " + this.lineIdx + " never ends!"
+				};
+			}
+		} while (this.str[idx - 1] == "\\");
+		// slice to include double quotes
+		var string = this.str.substring(previousIdx, idx + 1);
+		node.add(string);
+		this.lineIdx += string.split("\n").length - 1;
+	}
+
 	validate: function (node) {
 		// navigate tree, validate all variable and symbol names
 		if (!node.children) {
@@ -114,7 +126,7 @@ var Parser = {
 				node = node.substring(1);
 				type = "symbol";
 			} else if (node[0] == "\"" || node == "#t" || node == "#f") {
-				return; // any characters are valid
+				return; // string -> any characters are valid
 			}
 			var that = this;
 			node.split("").forEach(function (char) {
