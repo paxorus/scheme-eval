@@ -4,50 +4,50 @@ procedure: ["procedure", params[], body, Env], change this to an object later
 */
 
 
-function eval(text, env){
-	var exp = parse(text);
-	// exp could be an array of strings or one string
-	console.log(exp);
+function eval(exp, env) {
+	// exp could be a Node or a string
+	exp = Parser.isNode(exp) ? exp.children : exp;
+	
 	if (isLiteral(exp)) {
 		return evalLiteral(exp);
-	}else if (isAtom(exp)) {
+	} else if (isAtom(exp)) {
 		return lookupVariableValue(exp, env);
-	}else if (isApplication(exp)) {
+	} else if (isApplication(exp)) {
 		var proc = eval(exp[0], env);
 		var args = exp.slice(1).map(function (arg) {
 			return eval(arg, env);
 		});
 		return apply(proc, args);
-	}else{
-		throw {name: "Parse error", data: "Yikes! What have you done?"};
+	} else {
+		throw {name: "Runtime error", data: "Yikes! What have you done?"};
 	}
 }
 
-function apply(proc, args){
-	if(isPrimitiveProcedure(proc)){
+function apply(proc, args) {
+	if (isPrimitiveProcedure(proc)) {
 		return applyPrimitiveProcedure(proc, args);
-	}else if(isCompoundProcedure(proc)){
+	} else if (isCompoundProcedure(proc)) {
 		var newFrame = new Frame(proc[1], args);
 		var newEnv = proc[3].extend(newFrame);
 		return evalSequence(proc[2], newEnv);
-	}else{
+	} else {
 		throw {name: "Unknown procedure", data: "Did you ever create the function '" + proc + "'?"};
 	}
 }
 
 
 
-function evalSequence(exps, env){
-	var results = exps.map(function(exp){
+function evalSequence(exps, env) {
+	var results = exps.map(function(exp) {
 		return eval(exp);
 	});
 	return results[results.length - 1];
 }
 
-function evalLiteral(exp){
-	if(isNumber(exp)){
+function evalLiteral(exp) {
+	if (isNumber(exp)) {
 		return +exp;
-	}else if(isString(exp)){
+	}else if (isString(exp)) {
 		return exp.slice(1,-1);
 	}else{
 		return (exp == "#t") ? true : false;
@@ -55,39 +55,39 @@ function evalLiteral(exp){
 }
 
 
-function isLiteral(exp){
+function isLiteral(exp) {
 	return isAtom(exp) && (isNumber(exp) || isString(exp) || isBoolean(exp));
 }
 
-function isNumber(exp){
+function isNumber(exp) {
 	return !isNaN(+exp);// (NaN === NaN) is false
 }
 
-function isString(exp){
+function isString(exp) {
 	return exp[0] == "\"" && exp[exp.length-1] == "\"";
 }
 
-function isBoolean(exp){
+function isBoolean(exp) {
 	return exp == "#t" || exp == "#f";
 }
 
-function isApplication(exp){
+function isApplication(exp) {
 	return exp instanceof Array;
 }
 
-function isAtom(exp){
+function isAtom(exp) {
 	return !(exp instanceof Array);
 }
 
-function isPrimitiveProcedure(proc){
+function isPrimitiveProcedure(proc) {
 	return proc[0] == "primitive";
 }
 
-function isCompoundProcedure(proc){
+function isCompoundProcedure(proc) {
 	return proc[0] == "procedure";
 }
 
-function applyPrimitiveProcedure(proc, args){
+function applyPrimitiveProcedure(proc, args) {
 	var implementation = proc[1];
 	// JS-apply expects array, so we package into an array if an atom
 	// HOWEVER our list representations use an array so they would not get packaged here
@@ -103,18 +103,18 @@ function applyPrimitiveProcedure(proc, args){
  * @param {object} newFrame - variable->value map
  */
 
-function Environment(baseEnv, newFrame){
+function Environment(baseEnv, newFrame) {
 	var _base = baseEnv;
 	var _lookup = newFrame;
 
 	this.get = function (varName) {
 		// if not this frame, search lower frames
-		if(_lookup[varName]){
+		if (_lookup[varName]) {
 			return _lookup[varName];
-		}else if(_base === null){
+		} else if (_base === null) {
 			// no lower frames
 			return undefined;
-		}else{
+		} else{
 			// recursively search lower
 			return _base.get(varName);
 		}
@@ -125,23 +125,23 @@ function Environment(baseEnv, newFrame){
 	};
 }
 
-function Frame(varList, valList){
+function Frame(varList, valList) {
 	console.log("wip frame");
 	// error if list lengths differ
-	for(var i=0;i<varList.length;i++){
+	for( var i = 0; i < varList.length; i ++) {
 		this[varList[i]] = valList[i];
 	}
 }
 
-function lookupVariableValue(varName, env){
+function lookupVariableValue(varName, env) {
 	var value = env.get(varName);
-	if(value === undefined){
+	if (value === undefined) {
 		throw {name: "Unbound variable", data: "Did you ever set the variable '" + varName + "'?"};
 	}
 	return value;
 }
 
-function setupEnvironment(){
+function setupEnvironment() {
 	var primitiveFrame = {};
 	Object.keys(Primitive).forEach(function (op) {
 		primitiveFrame[op] = ["primitive", Primitive[op]];

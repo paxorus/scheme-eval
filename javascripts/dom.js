@@ -37,20 +37,16 @@ $(document).ready(function () {
 function run() {
 	terminal.clear();
 	var input = editor.getValue();
-	// var output = interpret(input);
-	// console.log(output);
-	// terminal.log(output);
 	var st = new SourceTree(input);
-	console.log(st.tree);
-	console.log(st.tree.toString());
-	window.x = st.tree;
-	// window.y = 
+	var output = st.run();
+	output.forEach(function (out) {
+		terminal.log(out);
+	});
 }
 
 function Terminal(node) {
 	this.log = function (line) {
 		var textNode = $("<span>", {class: "terminal-entry"});
-		// var line = this.stringify(value);
 		textNode.text(line);
 		node.append(textNode);
 		node.append("<br>");
