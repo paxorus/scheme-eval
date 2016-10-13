@@ -115,7 +115,7 @@ var Parser = {
 		var string = this.str.substring(previousIdx, idx + 1);
 		node.add(string);
 		this.lineIdx += string.split("\n").length - 1;
-	}
+	},
 
 	validate: function (node) {
 		// navigate tree, validate all variable and symbol names

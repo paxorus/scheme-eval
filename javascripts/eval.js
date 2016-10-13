@@ -16,8 +16,10 @@ function eval(exp, env) {
 		evalDefinition(exp, env);
 	} else if (exp[0] == 'if') {
 		return evalIf(exp, env);
+	} else if (exp[0] == 'lambda') {
+		return evalLambda(exp, env);
 	} else if (exp[0] == 'begin') {
-		return evalSequence(exp, env);
+		return evalSequence(exp.slice(1), env);
 	} else if (isApplication(exp)) {
 		var proc = eval(exp[0], env);
 		var args = exp.slice(1).map(function (arg) {
@@ -35,19 +37,11 @@ function apply(proc, args) {
 	} else if (isCompoundProcedure(proc)) {
 		var newFrame = new Frame(proc[1], args);
 		var newEnv = proc[3].extend(newFrame);
+		// console.log(proc[2][0]+"");
 		return evalSequence(proc[2], newEnv);
 	} else {
 		throw {name: "Unknown procedure", data: "Did you ever create the function '" + proc + "'?"};
 	}
-}
-
-
-
-function evalSequence(exps, env) {
-	var results = exps.map(function(exp) {
-		return eval(exp);
-	});
-	return results[results.length - 1];
 }
 
 function evalLiteral(exp) {
@@ -62,26 +56,39 @@ function evalLiteral(exp) {
 }
 
 function evalDefinition(exp, env) {
-	var value = eval(exp[2], env);
-	env.set(exp[1], value);
+	var varName, body;
+	if (Parser.isNode(exp[1])) {
+		varName = exp[1].children[0];
+		body = ["lambda", exp[1].children.slice(1), exp.slice(2)];
+	} else {
+		varName = exp[1];
+		body = exp[2];
+	}
+	var value = eval(body, env);
+	env.set(varName, value);
 }
 
 function evalIf(exp, env) {
 	var predicate = eval(exp[1], env);
-	var branch = exp[predicate?2:3];
+	var branch = exp[predicate ? 2 : 3];
 	return eval(branch, env);
 }
 
+function evalLambda(exp, env) {
+	// ["procedure", parameters, body, env]
+	var params = exp[1];
+	if (Parser.isNode(params)) {
+		params = params.children;
+	}
+	return ["procedure", params, exp[2], env];
+}
+
 function evalSequence(exp, env) {
-	if (exp.length == 1) {
-		return;
-	}
 	// toss all expression results except the final result
-	var value;
-	for (var i = 1; i < exp.length; i ++) {
-		value = eval(exp[i], env);
-	}
-	return value;
+	var values = exp.map(function (subExp) {
+		return eval(subExp, env);
+	});
+	return values[values.length - 1];
 }
 
 function applyPrimitiveProcedure(proc, args) {
@@ -115,7 +122,7 @@ function Environment(baseEnv, newFrame) {
 	}
 
 	this._frameOf = function (varName) {
-		if (_lookup[varName]) {
+		if (_lookup[varName] !== undefined) {
 			// check if in this frame
 			return _lookup;
 		} else if (_base === null) {
@@ -139,9 +146,7 @@ function Environment(baseEnv, newFrame) {
  * @param {object} valList - variable->value map
  */
 function Frame(varList, valList) {
-	console.log("wip frame");
-	// error if list lengths differ
-	for( var i = 0; i < varList.length; i ++) {
+	for (var i = 0; i < varList.length; i ++) {
 		this[varList[i]] = valList[i];
 	}
 }
