@@ -51,7 +51,7 @@ var Parser = {
 				case "\"":
 					// var idx = this.charIdx + 1;
 					// this.charIdx ++;
-					this.readString();
+					this.readString(node);
 					break;
 				case "\t":
 				case " ":
@@ -98,7 +98,7 @@ var Parser = {
 		this.symbolMode = false;
 	},
 
-	readString: function () {
+	readString: function (node) {
 		var previousIdx = this.charIdx;
 		do {
 			this.charIdx ++;// step past current double quote
@@ -179,4 +179,8 @@ function Node(parent) {
 		}
 		return "(" + s + ")";
 	}
+}
+
+Node.print = function (exp) {
+	return "(" + exp.join(", ") + ")";
 }

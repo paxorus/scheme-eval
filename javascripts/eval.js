@@ -7,11 +7,13 @@ procedure: ["procedure", params[], body, Env], change this to an object later
 function eval(exp, env) {
 	// exp could be a Node or a string
 	exp = Parser.isNode(exp) ? exp.children : exp;
-	
+
 	if (isLiteral(exp)) {
 		return evalLiteral(exp);
 	} else if (isAtom(exp)) {
 		return lookupVariableValue(exp, env);
+	} else if (exp[0] == 'set!') {
+		return evalSet(exp, env);
 	} else if (exp[0] == 'define') {
 		evalDefinition(exp, env);
 	} else if (exp[0] == 'if') {
@@ -37,7 +39,6 @@ function apply(proc, args) {
 	} else if (isCompoundProcedure(proc)) {
 		var newFrame = new Frame(proc[1], args);
 		var newEnv = proc[3].extend(newFrame);
-		// console.log(proc[2][0]+"");
 		return evalSequence(proc[2], newEnv);
 	} else {
 		throw {name: "Unknown procedure", data: "Did you ever create the function '" + proc + "'?"};
@@ -45,42 +46,105 @@ function apply(proc, args) {
 }
 
 function evalLiteral(exp) {
-	// value is independent of env
+	// value can be evaluated independent of env
 	if (isNumber(exp)) {
 		return +exp;
 	}else if (isString(exp)) {
-		return exp.slice(1,-1);
+		return exp.slice(1, -1);
 	}else{
 		return (exp == "#t") ? true : false;
 	}
 }
 
-function evalDefinition(exp, env) {
-	var varName, body;
-	if (Parser.isNode(exp[1])) {
-		varName = exp[1].children[0];
-		body = ["lambda", exp[1].children.slice(1), exp.slice(2)];
-	} else {
-		varName = exp[1];
-		body = exp[2];
+function evalSet(exp, env) {
+	if (exp.length != 3) {
+		throw {
+			name: "set!: bad syntax",
+			data: " has " + pl(exp.length - 1, "part") + " after keyword in: " + Node.print(exp)
+		};
 	}
-	var value = eval(body, env);
+	var varName = exp[1];
+	var value = exp[2];
+	env.setIfExists(varName, value);
+	return undefined;
+}
+
+function evalDefinition(exp, env) {
+	if (exp.length == 1) {// (define)
+		throw {
+			name: "define: bad syntax",
+			data: "in: " + Node.print(exp)
+		};
+	}
+
+	var varName, value;
+	if (Parser.isNode(exp[1])) {
+		if (exp[1].length == 0) {
+			throw {
+				name: "define: bad syntax",
+				data: "in: ()"
+			}
+		}
+		// if (exp.length == 2) {
+		// 	throw {
+
+		// 	};
+		// }
+
+		varName = exp[1].children[0];
+		var params = exp[1].children.slice(1);
+		value = ["procedure", params, exp.slice(2), env];
+	} else {
+		if (exp.length == 2) {// (define x)
+			throw {
+				name: "define: bad syntax",
+				data: "missing expression after identifier in: " + Node.print(exp)
+			};
+		} else if (exp.length >= 4) {// (define x 1 2)
+			throw {
+				name: "define: bad syntax",
+				data: "multiple expressions after identifier in: " + Node.print(exp)
+			};
+		}
+		varName = exp[1];
+		value = eval(exp[2], env);
+	}
 	env.set(varName, value);
 }
 
 function evalIf(exp, env) {
 	var predicate = eval(exp[1], env);
-	var branch = exp[predicate ? 2 : 3];
-	return eval(branch, env);
+	if (exp.length >= 5) {
+		throw {name: "if", data: "bad syntax in: " + Node.print(exp)};
+	} else if (predicate) {
+		return eval(exp[2], env);
+	} else if (exp.length == 3) {
+		// no output
+		return undefined;
+	} else {
+		return eval(exp[3], env);
+	}
 }
 
 function evalLambda(exp, env) {
 	// ["procedure", parameters, body, env]
+	if (exp.length == 1) {// (lambda)
+		throw {
+			name: "lambda: bad syntax",
+			data: "in: " + Node.print(exp)
+		};
+	} else if (exp.length == 2) {// (lambda (x))
+		throw {
+			name: "no expression in body",
+			data: "in: " + Node.print(exp)
+		};
+	}
 	var params = exp[1];
 	if (Parser.isNode(params)) {
 		params = params.children;
 	}
-	return ["procedure", params, exp[2], env];
+
+	return ["procedure", params, exp.slice(2), env];
 }
 
 function evalSequence(exp, env) {
@@ -117,7 +181,17 @@ function Environment(baseEnv, newFrame) {
 	};
 
 	this.set = function (varName, val) {
-		var frame = this._frameOf(varName) || _lookup;
+		_lookup[varName] = val;
+	}
+
+	this.setIfExists = function (varName, val) {
+		var frame = this._frameOf(varName);
+		if (frame === null) {
+			throw {
+				name: "set!: assignment disallowed",
+				data: varName + " hasn't been defined yet"
+			}
+		}
 		frame[varName] = val;
 	}
 
@@ -181,7 +255,7 @@ function isNumber(exp) {
 }
 
 function isString(exp) {
-	return exp[0] == "\"" && exp[exp.length-1] == "\"";
+	return exp.length >= 2 && exp[0] == "\"" && exp[exp.length-1] == "\"";
 }
 
 function isBoolean(exp) {
@@ -189,11 +263,11 @@ function isBoolean(exp) {
 }
 
 function isApplication(exp) {
-	return exp instanceof Array;
+	return Array.isArray(exp);
 }
 
 function isAtom(exp) {
-	return !(exp instanceof Array);
+	return !Array.isArray(exp);
 }
 
 function isPrimitiveProcedure(proc) {

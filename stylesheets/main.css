@@ -19,7 +19,7 @@ body {
 #run {
 	position: absolute;
 }
-.terminal-entry {
+.terminal-string {
 	/*padding: 10px;*/
 }
 .terminal-error {

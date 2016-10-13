@@ -9,32 +9,8 @@
 <body>
 
 <div id="editor">; Prakhar Sahay 10/12/2016
-(define (one-vec n) (all-vec n 1))
-(define (zero-vec n) (all-vec n 0))
-(define (all-vec n x)
-  (if (= n 0) (list)
-    (cons x (all-vec (- n 1) x))
-  )
-)
-
-(define (eyes n)
-  (define (eye2 i)
-    (if (= i n) (list)
-      (cons (one-at-i n i) (eye2 (+ i 1)))
-    )
-  )
-  (eye2 0)
-)
-(define (one-at-i m i)
-  (define (one-at-i2 count)
-    (if (= count i) (cons 1 (zero-vec (- m (+ i 1))))
-      (cons 0 (one-at-i2 (+ count 1)))
-    )
-  )
-  (one-at-i2 0)
-)
-
-(eyes 5)
+(define square (lambda (x) x))
+(square 5)
 </div>
 <div id="terminal">
 <!-- <textarea id="prompt"></textarea> -->

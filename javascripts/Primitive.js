@@ -290,8 +290,6 @@ function assertNargs(funcArgs, req){
 		valid = funcArgs.length == req;
 	} else if (req.startsWith(">=")) {
 		reqNum = parseInt(req.substring(2), 10);
-		console.log(reqNum);
-		console.log(funcArgs.length);
 		valid = funcArgs.length >= reqNum; 
 	}
 	if (!valid) {

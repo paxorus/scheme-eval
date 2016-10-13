@@ -75,6 +75,10 @@ function Terminal(node) {
 			return "#f";
 		} else if (typeof x == "string") {
 			return x.replace(/\\\\/g, "\\").replace(/\\\"/g, "\"");
+		} else if (Array.isArray(x) && x[0] == "procedure") {
+			var params = "(" + x[1].join(", ") + ")";
+			// window.y = x;
+			return params + " -> " + Node.print(x[2]);
 		}
 		return x;
 	}
