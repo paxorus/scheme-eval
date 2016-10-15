@@ -58,10 +58,10 @@ function Terminal(node) {
 		textNode.text(line);
 		node.append(textNode);
 		node.append("<br>");
-	},
+	}
 	this.clear = function () {
 		node.html("");
-	},
+	}
 	this.error = function (err) {
 		var textNode = $("<span>", {class: "terminal-error"});
 		textNode.text(err.name + ": " + err.data);
@@ -73,6 +73,8 @@ function Terminal(node) {
 			return "#t";
 		} else if (x === false) {
 			return "#f";
+		} else if (x === null) {
+			return "()";
 		} else if (typeof x == "string") {
 			return x.replace(/\\\\/g, "\\").replace(/\\\"/g, "\"");
 		} else if (Array.isArray(x) && x[0] == "procedure") {

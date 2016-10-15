@@ -1,0 +1,13 @@
+body {margin: 0; font-family: 'Droid Sans Mono', monospace}
+#main {margin: 0 10px}
+.suite-header {font-size: 20px; background-color: #99ccff; border-radius: 10px 10px 0 0;}
+.failed-suite {background-color: #669999;}
+.suite-text {padding: 5px 15px; cursor: pointer;}
+.assert-header {float: right;}
+
+.assert-bar {background-color: #669999; position: relative; height: 5px}
+.pass-bar {background-color: #33cc33; position: absolute; height: 5px; left: 0; display: inline-block; z-index: 5;}
+.fail-bar {background-color: #ff0000; position: absolute; height: 5px; left: 0; display: inline-block; width: 100%;}
+.pass-report, .fail-report {padding: 5px 15px; font-size: 14px;}
+.pass-report {background-color: #cce6ff; border-left: 5px solid #33cc33;}
+.fail-report {background-color: #ff8080; border-left: 5px solid #ff0000;}

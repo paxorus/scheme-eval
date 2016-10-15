@@ -87,8 +87,6 @@ var Primitive = {
 		var _deepEqual = function (a, b) {
 			var aIsPair = Primitive["pair?"](a);
 			var bIsPair = Primitive["pair?"](b);
-			console.log(aIsPair);
-			console.log(bIsPair);
 			if (aIsPair && bIsPair) {
 				return _deepEqual(car(a), car(b)) && _deepEqual(cdr(a), cdr(b));
 			} else if (!aIsPair && !bIsPair) {
