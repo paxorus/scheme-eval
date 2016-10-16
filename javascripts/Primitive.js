@@ -187,26 +187,6 @@ var AdvancedLib = {
 		}
 		return _append(l1);
 	},
-	and: function () {
-		var args = assert(arguments);
-		if (args.length == 0) {
-			return true;
-		}
-		var firstItem = args.shift();
-		return args.reduce(function (cumul, x) {
-			return cumul && x;
-		}, firstItem);
-	},
-	or: function () {
-		var args = assert(arguments);
-		if (args.length == 0) {
-			return false;
-		}
-		var firstItem = args.shift();
-		return args.reduce(function (cumul, x) {
-			return cumul || x;
-		}, firstItem);
-	},
 	not: function (a) {
 		assert(arguments, 1);
 		// returns true for 0 and "", unlike R5RS
@@ -231,16 +211,21 @@ var MathLib = {
 		nassert(arguments, 2);
 		return a % b;
 	},
-	min: function () {
-		var args = nassert(arguments, ">=1");
-		return args.reduce(function (cumul, a) {
-			return Math.min(cumul, a);
-		});
+	modulo: function (a, b) {
+		nassert(arguments, 2);
+		var mod = a % b;
+		return (mod < 0) ? mod + b : mod;
 	},
 	max: function () {
 		var args = nassert(arguments, ">=1");
 		return args.reduce(function (cumul, a) {
 			return Math.max(cumul, a);
+		});
+	},
+	min: function () {
+		var args = nassert(arguments, ">=1");
+		return args.reduce(function (cumul, a) {
+			return Math.min(cumul, a);
 		});
 	},
 	abs: function (x) {

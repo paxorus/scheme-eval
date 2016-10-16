@@ -22,6 +22,14 @@ function eval(exp, env) {
 		return evalLambda(exp, env);
 	} else if (exp[0] == 'begin') {
 		return evalSequence(exp.slice(1), env);
+	} else if (exp[0] == 'let') {
+		return evalLet(exp, env);
+	} else if (exp[0] == 'cond') {
+		return evalCond(exp, env);
+	} else if (exp[0] == 'and') {
+		return evalAnd(exp, env);
+	} else if (exp[0] == 'or') {
+		return evalOr(exp, env);
 	} else if (isApplication(exp)) {
 		var proc = eval(exp[0], env);
 		var args = exp.slice(1).map(function (arg) {
@@ -155,11 +163,59 @@ function evalSequence(exp, env) {
 	return values[values.length - 1];
 }
 
+function evalLet(exp, env) {
+	var body = exp[2];
+	var newFrame = new Frame([], []);
+	var newEnv = env.extend(newFrame);
+	exp[1].children.forEach(function (item) {
+		var pair = item.children;// ["x", "(+ 5 6)"]
+		newFrame[pair[0]] = eval(pair[1], newEnv);
+	});
+
+	return eval(body, newEnv);
+}
+
+function evalCond(exp, env) {
+	// bad syntax if else not last
+	for (var i = 1; i < exp.length; i ++) {
+		var pair = exp[i].children;
+		if (pair[0] == "else") {
+			return eval(pair[1], env);
+		} else if (eval(pair[0], env)) {
+			return eval(pair[1], env);
+		}
+	}
+}
+
+function evalAnd(exp, env) {
+	var cumul = true;
+	for (var i = 1; i < exp.length; i ++) {
+		var value = eval(exp[i], env);
+		if (value) {
+			cumul = value;
+		} else {
+			return value;
+		}
+	}
+	return cumul;
+}
+
+function evalOr(exp, env) {
+	var cumul = false;
+	for (var i = 1; i < exp.length; i ++) {
+		var value = eval(exp[i], env);
+		if (value) {
+			return value;
+		} else {
+			cumul = value;
+		}
+	}
+	return cumul;		
+}
+
 function applyPrimitiveProcedure(proc, args) {
 	var implementation = proc[1];
-	// JS-apply expects array, so we package into an array if an atom
-	// HOWEVER our list representations use an array so they would not get packaged here
-	// and a list would appear as two arguments
+	// JS-apply expects array
 	if (!Array.isArray(args)) {
 		args = [args];
 	}

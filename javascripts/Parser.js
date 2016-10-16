@@ -78,6 +78,8 @@ var Parser = {
 				this.buffer += char;
 			}
 		}
+		// edge case where last line is an atom, no newline at eof
+		this.flush(node);
 	},
 
 	findNext: function (char) {
